@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #ffffff;
+    color: #1a1a1a;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+}
+
+@layer utilities {
+  .container-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* Loading Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    to right,
+    #f6f7f8 0%,
+    #edeef1 20%,
+    #f6f7f8 40%,
+    #f6f7f8 100%
+  );
+  background-size: 1000px 100%;
+}
+
+/* Hover Effects */
+.hover-lift {
+  @apply transition-transform duration-300 ease-out;
+}
+
+.hover-lift:hover {
+  @apply -translate-y-1;
+}
+
+/* Image Overlay */
+.image-overlay {
+  @apply absolute inset-0 bg-black opacity-0 transition-opacity duration-300;
+}
+
+.image-overlay:hover {
+  @apply opacity-10;
+}
+
+/* Announcement Bar Marquee */
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.announcement-track {
+  animation: marquee 28s linear infinite;
+}
+
+.announcement-bar:hover .announcement-track {
+  animation-play-state: paused;
+}
+
+/* Hero fade-in */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.hero-content {
+  animation: fadeInUp 0.7s ease-out both;
+}
+
+/* Carousel Transitions */
+@keyframes slideIn {
+  from { 
+    opacity: 0; 
+    transform: translateX(30px);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateX(0);
+  }
+}
+
+.carousel-content {
+  animation: slideIn 0.6s ease-out both;
+}
