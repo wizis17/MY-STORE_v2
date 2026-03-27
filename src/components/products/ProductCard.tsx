@@ -1,8 +1,16 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { Playfair_Display } from 'next/font/google';
 import { formatPrice, calculateDiscount } from '@/lib/utils';
 import { ProductWithDetails } from '@/types';
 import { Badge } from '@/components/ui/Badge';
+import { ArrowUpRight } from 'lucide-react';
+
+const displayFont = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['500', '600', '700', '800'],
+  style: ['normal', 'italic'],
+});
 
 interface ProductCardProps {
   product: ProductWithDetails;
@@ -16,59 +24,69 @@ export function ProductCard({ product }: ProductCardProps) {
   const mainImage = product.images[0]?.image_url || '/placeholder-product.png';
 
   return (
-    <Link href={`/products/${product.slug}`} className="group">
-      <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
+    <Link href={`/products/${product.slug}`} className="group border border-black/10 bg-white/70 p-2 backdrop-blur-[2px] transition-colors hover:bg-white">
+      <div className="relative aspect-[3/4] overflow-hidden bg-[#efede8] rounded-md">
         <Image
           src={mainImage}
           alt={product.name}
           fill
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          className="object-cover transition-all duration-500 group-hover:scale-[1.03]"
         />
-        {discount > 0 && (
-          <Badge variant="error" className="absolute top-2 left-2">
-            -{discount}%
-          </Badge>
-        )}
         {product.featured && (
-          <Badge variant="info" className="absolute top-2 right-2">
+          <span className="absolute left-1.5 top-1.5 border border-black/15 bg-[#f5f3ef]/90 px-1.5 py-0.5 text-[8px] font-semibold uppercase italic tracking-[0.15em] text-black/55">
             Featured
-          </Badge>
+          </span>
+        )}
+        {discount > 0 && (
+          <span className="absolute right-1.5 top-1.5 border border-black/15 bg-[#f5f3ef]/90 px-1.5 py-0.5 text-[8px] font-semibold uppercase italic tracking-[0.15em] text-black/55">
+            -{discount}%
+          </span>
         )}
       </div>
 
-      <div className="mt-4 space-y-2">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <h3 className="text-sm font-medium text-gray-900 group-hover:text-primary-600 transition-colors line-clamp-2">
-              {product.name}
-            </h3>
-            {product.category && (
-              <p className="text-xs text-gray-500 mt-1">{product.category.name}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <span className="text-base font-bold text-gray-900">{formatPrice(product.price)}</span>
-          {product.compare_at_price && product.compare_at_price > product.price && (
-            <span className="text-sm text-gray-500 line-through">
-              {formatPrice(product.compare_at_price)}
-            </span>
-          )}
+      <div className="mt-3">
+        <p className="text-[9px] font-medium uppercase tracking-[0.15em] text-black/40">
+          {product.category?.name ?? 'Studio Essentials'}
+        </p>
+        <h3 className={`${displayFont.className} mt-0.5 text-lg italic leading-tight text-black transition-transform group-hover:translate-x-0.5`}>
+          {product.name}
+        </h3>
+        <div className="mt-2 flex items-center justify-between">
+          <p className="text-xs font-semibold text-black/75">{formatPrice(product.price)}</p>
+          <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold uppercase tracking-[0.15em] text-black/50 transition-colors group-hover:text-black">
+            View
+            <ArrowUpRight className="h-3 w-3" />
+          </span>
         </div>
 
         {product.variants && product.variants.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {Array.from(new Set(product.variants.map((v) => v.color)))
-              .slice(0, 5)
-              .map((color) => (
-                <div
-                  key={color}
-                  className="h-4 w-4 rounded-full border border-gray-300"
-                  style={{ backgroundColor: color.toLowerCase() }}
-                  title={color}
-                />
-              ))}
+          <div className="mt-3 space-y-2">
+            {/* Sizes */}
+            <div className="flex flex-wrap gap-1.5">
+              {Array.from(new Set(product.variants.map((v) => v.size)))
+                .sort()
+                .map((size) => (
+                  <span
+                    key={size}
+                    className="text-[8px] font-semibold uppercase tracking-[0.1em] px-2 py-0.5 border border-black/20 rounded bg-white/50 text-black/70"
+                  >
+                    {size}
+                  </span>
+                ))}
+            </div>
+            {/* Colors */}
+            <div className="flex flex-wrap gap-1">
+              {Array.from(new Set(product.variants.map((v) => v.color)))
+                .slice(0, 5)
+                .map((color) => (
+                  <div
+                    key={color}
+                    className="h-2.5 w-2.5 rounded-full border border-black/20"
+                    style={{ backgroundColor: color.toLowerCase() }}
+                    title={color}
+                  />
+                ))}
+            </div>
           </div>
         )}
       </div>

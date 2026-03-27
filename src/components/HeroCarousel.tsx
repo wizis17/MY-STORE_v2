@@ -6,7 +6,7 @@ import Image from 'next/image';
 
 const hero = {
   eyebrow: 'FLUX STUDIO x ESSENTIALS',
-  bigText: 'FLUX7',
+  bigText: 'ESSENTIALS',
   image: '/images/shirt1.png',
   buttonLink: '/products',
 };
@@ -17,17 +17,18 @@ export function HeroCarousel() {
 
   return (
     <section className="relative h-[calc(100svh-4rem)] min-h-[600px] bg-[#eeece8] overflow-hidden select-none">
-      {/* Giant bottom text */}
+      {/* Giant background text */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-0 left-0 right-0 z-0 overflow-hidden leading-none"
+        className="pointer-events-none absolute inset-0 z-0 overflow-hidden leading-none flex items-center justify-center"
       >
         <span
-          className="block w-full text-center font-black uppercase italic text-black"
+          className="font-bungee w-full text-center font-black uppercase text-black"
           style={{
-            fontSize: 'clamp(5rem, 23vw, 22rem)',
+            fontSize: 'clamp(5rem, 28vw, 28rem)',
             lineHeight: 0.82,
-            letterSpacing: '-0.03em',
+            letterSpacing: '-0.02em',
+            opacity: 0.08,
           }}
         >
           {hero.bigText}
@@ -59,9 +60,9 @@ export function HeroCarousel() {
       </div>
 
       {/* Central product image */}
-      <div className="absolute inset-0 flex items-center justify-center z-10">
+      <Link href={hero.buttonLink} className="absolute inset-0 flex items-center justify-center z-10 cursor-pointer group/image">
         <div
-          className="relative"
+          className="relative group"
           style={{
             width: 'clamp(220px, 34vw, 460px)',
             height: 'clamp(360px, 70vh, 800px)',
@@ -89,11 +90,11 @@ export function HeroCarousel() {
               src={hero.image}
               alt={hero.eyebrow}
               fill
-              className="object-contain drop-shadow-[0_32px_56px_rgba(0,0,0,0.18)]"
+              className="object-contain drop-shadow-[0_32px_56px_rgba(0,0,0,0.18)] transition-all duration-500 group-hover:scale-105 group-hover:drop-shadow-[0_48px_72px_rgba(0,0,0,0.28)]"
               style={{
                 filter: 'grayscale(100%) contrast(1.08)',
               }}
-              onLoadingComplete={() => setIsImageLoaded(true)}
+              onLoad={() => setIsImageLoaded(true)}
               onError={() => {
                 setHasImageError(true);
                 setIsImageLoaded(false);
@@ -102,7 +103,7 @@ export function HeroCarousel() {
             />
           ) : null}
         </div>
-      </div>
+      </Link>
     </section>
   );
 }

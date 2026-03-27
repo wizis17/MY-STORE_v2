@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
-import { ArrowLeft, Save, Loader2, Trash2, Upload, Link as LinkIcon } from 'lucide-react';
+import { VariantMatrixBuilder } from '@/components/admin/VariantMatrixBuilder';import { getColorHex } from '@/lib/colorMap';import { ArrowLeft, Save, Loader2, Trash2, Upload, Link as LinkIcon } from 'lucide-react';
 import Link from 'next/link';
 import { ProductFormData, ProductStatus, ProductGender } from '@/types';
 
@@ -60,6 +60,9 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     status: 'draft' as ProductStatus,
     featured: false,
     gender: undefined,
+    available_sizes: [],
+    available_colors: [],
+    variant_combinations: [],
   });
 
   // Fetch product and categories
@@ -109,6 +112,9 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
           status: prod.status,
           featured: prod.featured,
           gender: prod.gender || undefined,
+          available_sizes: prod.available_sizes || [],
+          available_colors: prod.available_colors || [],
+          variant_combinations: prod.variant_combinations || [],
         });
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -169,6 +175,9 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
             image_url: url,
             position: index,
           })),
+          available_sizes: formData.available_sizes || [],
+          available_colors: formData.available_colors || [],
+          variant_combinations: formData.variant_combinations || [],
         }),
       });
 
@@ -295,15 +304,18 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
               </CardContent>
             </Card>
 
-            {/* Pricing */}
+
+
+            {/* Product Variants - Sizes & Colors */}
             <Card>
               <CardHeader>
-                <CardTitle>Pricing</CardTitle>
+                <CardTitle>Product Variants</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Base Price */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Price * ($)
+                    Base Price * ($)
                   </label>
                   <Input
                     type="number"
@@ -314,23 +326,209 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                     onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                     placeholder="0.00"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Stock Quantity *
-                  </label>
-                  <Input
-                    type="number"
-                    min="0"
-                    required
-                    value={formData.stock}
-                    onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
-                    placeholder="0"
-                  />
                   <p className="text-xs text-gray-500 mt-1">
-                    Number of items available in stock
+                    Base price for all variants (Qty × Price = Final price)
                   </p>
                 </div>
+
+                {/* Step 1: Select Available Sizes */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Available Sizes
+                  </label>
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => (
+                      <label key={size} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.available_sizes?.includes(size as any) || false}
+                          onChange={(e) => {
+                            const sizes = formData.available_sizes || [];
+                            if (e.target.checked) {
+                              setFormData({
+                                ...formData,
+                                available_sizes: [...sizes, size as any],
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                available_sizes: sizes.filter(s => s !== size),
+                              });
+                            }
+                          }}
+                          className="rounded border-gray-300"
+                        />
+                        <span className="text-sm text-gray-700">{size}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      Custom Numeric Sizes
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="e.g., 28, 30, 32, 34, 36, 38, 40, 42 (comma-separated)"
+                      onChange={(e) => {
+                        const sizes = formData.available_sizes || [];
+                        const standardSizes = sizes.filter(s => ['XS', 'S', 'M', 'L', 'XL', 'XXL'].includes(s));
+                        
+                        if (e.target.value.trim()) {
+                          const numericSizes = e.target.value.split(',').map(s => s.trim()).filter(s => s);
+                          setFormData({
+                            ...formData,
+                            available_sizes: [...(standardSizes as any), ...numericSizes] as any,
+                          });
+                        } else {
+                          setFormData({
+                            ...formData,
+                            available_sizes: standardSizes as any,
+                          });
+                        }
+                      }}
+                      value={
+                        formData.available_sizes
+                          ?.filter(s => !['XS', 'S', 'M', 'L', 'XL', 'XXL'].includes(s))
+                          .join(', ') || ''
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* Step 2: Select Available Colors */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Available Colors
+                  </label>
+                  <div className="space-y-2">
+                    {['Black', 'White', 'Navy', 'Red', 'Blue', 'Green', 'Gray', 'Beige'].map((color) => (
+                      <label key={color} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.available_colors?.includes(color) || false}
+                          onChange={(e) => {
+                            const colors = formData.available_colors || [];
+                            if (e.target.checked) {
+                              setFormData({
+                                ...formData,
+                                available_colors: [...colors, color],
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                available_colors: colors.filter(c => c !== color),
+                              });
+                            }
+                          }}
+                          className="rounded border-gray-300"
+                        />
+                        <span className="text-sm text-gray-700">{color}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="mt-3 pt-3 border-t">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      Add Custom Color
+                    </label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="e.g., Burgundy, Emerald, Charcoal"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            const colorName = (e.target as HTMLInputElement).value.trim();
+                            if (colorName && !formData.available_colors?.includes(colorName)) {
+                              setFormData({
+                                ...formData,
+                                available_colors: [...(formData.available_colors || []), colorName],
+                              });
+                              (e.target as HTMLInputElement).value = '';
+                            }
+                          }
+                        }}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          const input = (e.target as HTMLElement).previousElementSibling as HTMLInputElement;
+                          const colorName = input.value.trim();
+                          if (colorName && !formData.available_colors?.includes(colorName)) {
+                            setFormData({
+                              ...formData,
+                              available_colors: [...(formData.available_colors || []), colorName],
+                            });
+                            input.value = '';
+                          }
+                        }}
+                      >
+                        Add
+                      </Button>
+                    </div>
+                    {Array.isArray(formData.available_colors) && formData.available_colors.some(c => !['Black', 'White', 'Navy', 'Red', 'Blue', 'Green', 'Gray', 'Beige'].includes(c)) && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {formData.available_colors
+                          .filter(c => !['Black', 'White', 'Navy', 'Red', 'Blue', 'Green', 'Gray', 'Beige'].includes(c))
+                          .map((color) => (
+                            <span
+                              key={color}
+                              className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded"
+                            >
+                              <div
+                                className="w-4 h-4 rounded border border-blue-700"
+                                style={{ backgroundColor: getColorHex(color) }}
+                                title={color}
+                              />
+                              {color}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setFormData({
+                                    ...formData,
+                                    available_colors: formData.available_colors?.filter(c => c !== color),
+                                  })
+                                }
+                                className="hover:text-blue-900"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Step 3: Variant Matrix Builder */}
+                {(formData.available_sizes?.length || 0) > 0 && (formData.available_colors?.length || 0) > 0 && (
+                  <div className="pt-4 border-t">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Size × Color Combinations
+                    </label>
+                    <VariantMatrixBuilder
+                      sizes={formData.available_sizes || []}
+                      colors={formData.available_colors || []}
+                      combinations={formData.variant_combinations || []}
+                      onChange={(combinations) =>
+                        setFormData({
+                          ...formData,
+                          variant_combinations: combinations,
+                        })
+                      }
+                      basePrice={formData.price}
+                    />
+                  </div>
+                )}
+
+                {(formData.available_sizes?.length || 0) === 0 || (formData.available_colors?.length || 0) === 0 ? (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded">
+                    <p className="text-sm text-amber-800">
+                      Select at least one size and one color to build variant combinations.
+                    </p>
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
 

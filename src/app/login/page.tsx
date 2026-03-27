@@ -85,7 +85,10 @@ export default function LoginPage() {
             <div className="group relative w-80 h-80">
               {/* Main Shopping Bag */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-64 h-64 bg-gradient-to-br from-gray-400 to-gray-600 group-hover:from-blue-400 group-hover:to-green-500 rounded-3xl flex items-center justify-center transform -rotate-6 shadow-2xl transition-colors duration-300 border border-gray-300">
+                <div 
+                  className="w-64 h-64 rounded-3xl flex items-center justify-center transform -rotate-6 shadow-2xl transition-all duration-300 border border-gray-300 bg-cover bg-center"
+                  style={{ backgroundImage: "url('/images/bg-login.jpg')" }}
+                >
                   <Image
                     src="/images/login.png"
                     alt="Login"

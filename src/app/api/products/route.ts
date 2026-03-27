@@ -34,14 +34,20 @@ export async function GET(request: NextRequest) {
 
     // Apply filters
     if (category) {
-      const { data: categoryData } = await supabase
-        .from('categories')
-        .select('id')
-        .eq('slug', category)
-        .single();
-      
-      if (categoryData) {
-        query = query.eq('category_id', categoryData.id);
+      // First try to match by exact ID
+      if (category.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        query = query.eq('category_id', category);
+      } else {
+        // Fallback to searching by slug
+        const { data: categoryData } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('slug', category)
+          .single();
+        
+        if (categoryData) {
+          query = query.eq('category_id', categoryData.id);
+        }
       }
     }
 

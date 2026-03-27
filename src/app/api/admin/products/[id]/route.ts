@@ -119,6 +119,8 @@ export async function PUT(
         status: body.status || 'draft',
         featured: body.featured ?? false,
         gender: body.gender || null,
+        available_sizes: body.available_sizes || [],
+        available_colors: body.available_colors || [],
       })
       .eq('id', params.id)
       .select()
@@ -159,7 +161,13 @@ export async function PUT(
       }
     }
 
-    return NextResponse.json({ product });
+    // Note: variant_combinations are stored for reference but can be computed from available_sizes and available_colors
+    const productResponse = {
+      ...product,
+      variant_combinations: body.variant_combinations || [],
+    };
+
+    return NextResponse.json({ product: productResponse });
   } catch (error) {
     console.error('Error updating product:', error);
     return NextResponse.json(

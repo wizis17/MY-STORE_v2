@@ -85,6 +85,7 @@ export default function SignupPage() {
       
       <div className="pointer-events-none absolute inset-0 z-10 hidden items-center justify-center lg:flex">
         <div className="rounded-full bg-white p-2 shadow-xl">
+          
           <Image
             src="/images/circle-logo.png"
             alt="Flux circle logo"
@@ -103,10 +104,13 @@ export default function SignupPage() {
             <div className="group relative w-80 h-80">
               {/* Main Image */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-64 h-64 bg-gradient-to-br from-gray-400 to-gray-600 group-hover:from-cyan-400 group-hover:to-blue-400 rounded-3xl flex items-center justify-center transform -rotate-6 shadow-2xl transition-colors duration-300 border border-gray-300">
+                <div 
+                  className="w-64 h-64 rounded-3xl flex items-center justify-center transform -rotate-6 shadow-2xl transition-all duration-300 border border-gray-300 bg-cover bg-center"
+                  style={{ backgroundImage: "url('/images/bg-login.jpg')" }}
+                >
                   <Image
                     src="/images/login.png"
-                    alt="Sign Up"
+                    alt="Login"
                     width={220}
                     height={220}
                     className="object-contain grayscale brightness-90 contrast-90 group-hover:grayscale-0 group-hover:brightness-100 group-hover:contrast-100 transition duration-300"

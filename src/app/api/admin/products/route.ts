@@ -118,6 +118,8 @@ export async function POST(request: NextRequest) {
         status: body.status || 'draft',
         featured: body.featured ?? false,
         gender: body.gender || null,
+        available_sizes: body.available_sizes || [],
+        available_colors: body.available_colors || [],
       })
       .select()
       .single();
@@ -148,7 +150,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ product }, { status: 201 });
+    // Note: variant_combinations are stored for reference but can be computed from available_sizes and available_colors
+    // They're included in the response for client-side state management
+    const productResponse = {
+      ...product,
+      variant_combinations: body.variant_combinations || [],
+    };
+
+    return NextResponse.json({ product: productResponse }, { status: 201 });
   } catch (error) {
     console.error('Error creating product:', error);
     return NextResponse.json(

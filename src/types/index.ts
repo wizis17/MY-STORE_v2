@@ -20,6 +20,18 @@ export type PaymentMethod = 'card' | 'paypal' | 'stripe';
 export type ReviewStatus = 'pending' | 'approved' | 'rejected';
 
 // =====================================================
+// VARIANT MATRIX TYPES
+// =====================================================
+
+export interface VariantCombination {
+  size: ProductSize | string;
+  color: string;
+  quantity: number;
+  price_adjustment: number; // Additional price on top of base price
+  sku?: string;
+}
+
+// =====================================================
 // PROFILE / USER TYPES
 // =====================================================
 
@@ -81,6 +93,8 @@ export interface Product {
   status: ProductStatus;
   featured: boolean;
   gender: ProductGender | null;
+  available_sizes: ProductSize[];
+  available_colors: string[];
   created_at: string;
   updated_at: string;
 }
@@ -320,6 +334,9 @@ export interface ProductFormData {
   status: ProductStatus;
   featured: boolean;
   gender?: ProductGender;
+  available_sizes?: ProductSize[];
+  available_colors?: string[];
+  variant_combinations?: VariantCombination[];
 }
 
 export interface CheckoutFormData {

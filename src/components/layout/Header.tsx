@@ -19,7 +19,7 @@ export function Header() {
   const [userRole, setUserRole] = useState<'customer' | 'admin' | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const { totalItems, openCart } = useCartStore();
+  const totalItems = useCartStore((state) => state.totalItems);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -115,15 +115,9 @@ export function Header() {
               <Link href="/products" className="flex items-center space-x-2 text-sm font-medium text-gray-700 hover:text-coral transition-colors">
                 <span>All Products</span>
               </Link>
-              <Link href="/about" className="flex items-center space-x-2 text-sm font-medium text-gray-700 hover:text-coral transition-colors">
+              <Link href="/contact" className="flex items-center space-x-2 text-sm font-medium text-gray-700 hover:text-coral transition-colors">
                 <span>Contact Us</span>
               </Link>
-              {userRole === 'admin' && (
-                <Link href="/admin" className="flex items-center space-x-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors bg-blue-50 px-3 py-1 rounded-md">
-                  <LayoutDashboard className="h-4 w-4" />
-                  <span>Admin Dashboard</span>
-                </Link>
-              )}
             </nav>
           </div>
 
@@ -186,19 +180,18 @@ export function Header() {
               </>
             ) : (
               <>
-                <Link href="/login">
-                  <Button variant="outline" size="sm" className="hidden md:flex">
-                    Log in
-                  </Button>
+                <Link 
+                  href="/login" 
+                  className="hidden md:inline-flex items-center justify-center rounded-md gap-2 text-[12px] font-semibold uppercase italic tracking-[0.25em] px-6 py-3 bg-black text-white hover:bg-black/80 transition-colors"
+                >
+                  Log in
                 </Link>
               </>
             )}
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={openCart}
-              className="relative hidden md:inline-flex hover:bg-gray-100"
+            <Link 
+              href="/cart"
+              className="relative hidden md:inline-flex h-10 w-10 items-center justify-center rounded-md font-medium transition-colors hover:bg-gray-100 text-gray-900"
             >
               <ShoppingCart className="h-5 w-5" />
               {totalItems() > 0 && (
@@ -206,7 +199,7 @@ export function Header() {
                   {totalItems()}
                 </span>
               )}
-            </Button>
+            </Link>
 
             <Button
               variant="ghost"
@@ -238,9 +231,8 @@ export function Header() {
               <Home className="h-5 w-5" />
             </Link>
             {/* Cart — right */}
-            <button
-              type="button"
-              onClick={openCart}
+            <Link
+              href="/cart"
               aria-label="Open cart"
               className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100"
             >
@@ -250,7 +242,7 @@ export function Header() {
                   {totalItems()}
                 </span>
               )}
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -268,18 +260,20 @@ export function Header() {
                       <p className="text-xs text-gray-500 truncate">{user.email}</p>
                     </div>
                     {userRole === 'admin' && (
-                      <Link href="/admin" className="block">
-                        <Button variant="outline" size="sm" className="w-full border-blue-300 text-blue-600 hover:bg-blue-50">
-                          <LayoutDashboard className="h-4 w-4 mr-2" />
-                          Admin Dashboard
-                        </Button>
+                      <Link 
+                        href="/admin" 
+                        className="inline-flex items-center justify-center h-9 rounded-md px-3 text-sm font-medium transition-colors w-full border border-blue-300 bg-white text-blue-600 hover:bg-blue-50"
+                      >
+                        <LayoutDashboard className="h-4 w-4 mr-2" />
+                        Admin Dashboard
                       </Link>
                     )}
-                    <Link href="/profile" className="block">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Settings className="h-4 w-4 mr-2" />
-                        Profile Settings
-                      </Button>
+                    <Link 
+                      href="/profile" 
+                      className="inline-flex items-center justify-center h-9 rounded-md px-3 text-sm font-medium transition-colors border border-gray-300 bg-white hover:bg-gray-50 text-gray-900 w-full"
+                    >
+                      <Settings className="h-4 w-4 mr-2" />
+                      Profile Settings
                     </Link>
                     <Button
                       onClick={handleLogout}
@@ -293,10 +287,11 @@ export function Header() {
                   </>
                 ) : (
                   <>
-                    <Link href="/login" className="block">
-                      <Button variant="outline" size="sm" className="w-full">
-                        Log in
-                      </Button>
+                    <Link 
+                      href="/login" 
+                      className="inline-flex items-center justify-center h-9 rounded-md px-3 text-sm font-medium transition-colors border border-gray-300 bg-white hover:bg-gray-50 text-gray-900 w-full"
+                    >
+                      Log in
                     </Link>
                   </>
                 )}

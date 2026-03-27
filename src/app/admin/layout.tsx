@@ -20,8 +20,8 @@ export default async function AdminLayout({
         {/* Sidebar */}
         <aside className="w-64 bg-white border-r min-h-screen fixed h-full overflow-y-auto">
           <div className="p-6 border-b">
-            <Link href="/admin">
-              <h2 className="text-xl font-bold text-primary-600">Admin Panel</h2>
+            <Link href="/">
+              <img src="/images/logo.png" alt="Flux Logo" className="h-12" />
             </Link>
           </div>
           <nav className="px-4 py-6 space-y-2">

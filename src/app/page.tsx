@@ -4,6 +4,7 @@ import { Playfair_Display, Space_Grotesk } from 'next/font/google';
 import { createClient } from '@/lib/supabase/server';
 import { HeroCarousel } from '@/components/HeroCarousel';
 import { EditorialCarousel } from '@/components/EditorialCarousel';
+import { FeaturedProductsCarousel } from '@/components/FeaturedProductsCarousel';
 import { ArrowUpRight, Eye, ShoppingBag, Truck } from 'lucide-react';
 import type { ProductWithDetails } from '@/types';
 
@@ -45,8 +46,8 @@ const formatPrice = (price: number) =>
   new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(price);
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -59,7 +60,6 @@ export default async function HomePage() {
       .from('products')
       .select(`*, category:categories(*), images:product_images(*), variants:product_variants(*)`)
       .eq('status', 'active')
-      .eq('featured', true)
       .limit(8);
 
     products = ((featuredProducts ?? []) as ProductWithDetails[]).map((product) => ({
@@ -85,13 +85,13 @@ export default async function HomePage() {
           }}
         />
         <div className="container-padding mx-auto">
-          <div className="relative grid grid-cols-1 gap-10 py-16 md:grid-cols-[1.2fr_1fr] md:py-24">
+          <div className="relative grid grid-cols-1 gap-10 py-8 md:grid-cols-[1.2fr_1fr] md:py-12">
             <div>
               <p className="text-[10px] font-semibold uppercase italic tracking-[0.38em] text-black/45">
                 Home / Products
               </p>
               <h2
-                className={`${displayFont.className} mt-4 max-w-2xl text-4xl italic leading-[0.92] text-black md:text-6xl`}
+                className="font-gveret mt-3 max-w-2xl text-4xl leading-[0.92] text-black md:text-6xl"
               >
                 Dressed for the journey, wherever it leads.
               </h2>
@@ -108,7 +108,7 @@ export default async function HomePage() {
               <p className="text-[10px] font-semibold uppercase italic tracking-[0.35em] text-black/40">
                 Featured Selection
               </p>
-              <h2 className={`${displayFont.className} mt-3 text-4xl italic leading-none text-black md:text-5xl`}>
+              <h2 className="font-gveret mt-3 text-4xl italic leading-none text-black md:text-5xl">
                 New Arrivals
               </h2>
             </div>
@@ -122,63 +122,81 @@ export default async function HomePage() {
           </div>
 
           {products.length > 0 ? (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-              {products.map((product) => {
-                const mainImage = product.images[0]?.image_url || '/images/shirt1.png';
-
-                return (
-                  <Link
-                    key={product.id}
-                    href={`/products/${product.slug}`}
-                    className="group border border-black/10 bg-white/70 p-3 backdrop-blur-[2px] transition-colors hover:bg-white"
-                  >
-                    <div className="relative aspect-[3/4] overflow-hidden bg-[#efede8]">
-                      <Image
-                        src={mainImage}
-                        alt={product.name}
-                        fill
-                        sizes="(min-width: 1280px) 22vw, (min-width: 640px) 45vw, 100vw"
-                        className="object-cover grayscale transition-all duration-500 group-hover:scale-[1.03] group-hover:grayscale-0"
+            <FeaturedProductsCarousel products={products} />
+          ) : (
+            <div className="space-y-12">
+              {/* Demo Carousel - Shows what it looks like with products */}
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {[
+                    { name: 'Premium Hoodie', price: '$120', category: 'Apparel', image: '/images/cover.png' },
+                    { name: 'Utility Jacket', price: '$150', category: 'Outerwear', image: '/images/cover.png' },
+                    { name: 'Classic Shirt', price: '$85', category: 'Basics', image: '/images/cover.png' },
+                  ].map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="border border-black/10 bg-white/70 p-3 backdrop-blur-[2px]"
+                    >
+                      <div 
+                        className="relative aspect-[3/4] overflow-hidden bg-[#f0ebe4] rounded"
+                        style={{
+                          backgroundImage: `url('${item.image}')`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                        }}
                       />
-                      {product.featured ? (
-                        <span className="absolute left-2 top-2 border border-black/15 bg-[#f5f3ef]/90 px-2 py-1 text-[9px] font-semibold uppercase italic tracking-[0.2em] text-black/55">
-                          Featured
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="mt-4">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-black/40">
-                        {product.category?.name ?? 'Studio Essentials'}
-                      </p>
-                      <h3
-                        className={`${displayFont.className} mt-1 text-2xl italic leading-tight text-black transition-transform group-hover:translate-x-0.5`}
-                      >
-                        {product.name}
-                      </h3>
-                      <div className="mt-4 flex items-center justify-between">
-                        <p className="text-sm font-semibold text-black/75">{formatPrice(product.price)}</p>
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-black/50 transition-colors group-hover:text-black">
-                          View
-                          <ArrowUpRight className="h-3.5 w-3.5" />
-                        </span>
+
+                      <div className="mt-4">
+                        <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-black/40">
+                          {item.category}
+                        </p>
+                        <h3
+                          className={`${displayFont.className} mt-1 text-2xl italic leading-tight text-black`}
+                        >
+                          {item.name}
+                        </h3>
+                        <div className="mt-4 flex items-center justify-between">
+                          <p className="text-sm font-semibold text-black/75">{item.price}</p>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-black/50">
+                            View
+                            <ArrowUpRight className="h-3.5 w-3.5" />
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </Link>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="border border-black/15 bg-[#f4f2ee] px-6 py-14 text-center md:px-10">
-              <p className="text-[10px] font-semibold uppercase italic tracking-[0.35em] text-black/45">
-                Catalogue Pending
-              </p>
-              <h3 className={`${displayFont.className} mt-3 text-3xl italic text-black md:text-4xl`}>
-                Products Coming Soon
-              </h3>
-              <p className="mx-auto mt-3 max-w-xl text-sm text-black/60 md:text-base">
-                Once inventory is published, this space will automatically populate with featured
-                pieces from your store.
-              </p>
+                  ))}
+                </div>
+
+                {/* Navigation Controls */}
+                <div className="flex items-center justify-center gap-6 pt-4">
+                  <button className="p-2 border border-black/10 bg-white/70 hover:bg-white transition-colors rounded-md">
+                    <ArrowUpRight className="h-5 w-5 text-black rotate-180" />
+                  </button>
+                  <div className="flex gap-2">
+                    {[0, 1, 2].map((idx) => (
+                      <button
+                        key={idx}
+                        className={`transition-all ${
+                          idx === 0 ? 'h-2 w-6 bg-black' : 'h-2 w-2 bg-black/20 hover:bg-black/40'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <button className="p-2 border border-black/10 bg-white/70 hover:bg-white transition-colors rounded-md">
+                    <ArrowUpRight className="h-5 w-5 text-black" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Message */}
+              <div className="border border-black/15 bg-[#f4f2ee] px-6 py-8 text-center md:px-10">
+                <p className="text-[10px] font-semibold uppercase italic tracking-[0.35em] text-black/45">
+                  Catalogue Pending
+                </p>
+                <h3 className={`${displayFont.className} mt-2 text-lg italic text-black`}>
+                  Your products will appear here once added to the database
+                </h3>
+              </div>
             </div>
           )}
         </div>
@@ -190,7 +208,7 @@ export default async function HomePage() {
               <p className="text-[10px] font-semibold uppercase italic tracking-[0.35em] text-black/40">
                 Purchase Process
               </p>
-              <h2 className={`${displayFont.className} mt-3 text-4xl italic leading-none text-black md:text-5xl`}>
+              <h2 className="font-gveret mt-3 text-4xl italic leading-none text-black md:text-5xl">
                 Grab & Go
               </h2>
             </div>
