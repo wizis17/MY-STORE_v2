@@ -54,6 +54,9 @@ export default function CheckoutPage() {
   const [useStaticKhqrImage, setUseStaticKhqrImage] = useState(false);
   const [md5Hash, setMd5Hash] = useState<string>('');
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
+  const [receiptUrl, setReceiptUrl] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [currentOrderNumber, setCurrentOrderNumber] = useState<string>('');
 
   const filteredProvinces = CAMBODIA_PROVINCES.filter(p => 
     p.toLowerCase().includes(provinceSearch.toLowerCase())
@@ -91,7 +94,8 @@ export default function CheckoutPage() {
                   items,
                   customerInfo: formData,
                   total,
-                  paymentStatus: 'paid'
+                  paymentStatus: 'paid',
+                  orderNumber: currentOrderNumber
                 })
               });
             } catch (err) {
@@ -112,7 +116,7 @@ export default function CheckoutPage() {
       cancelPolling = true;
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [showQR, paymentStatus, md5Hash, items, formData, total]);
+  }, [showQR, paymentStatus, md5Hash, items, formData, total, currentOrderNumber]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,6 +127,10 @@ export default function CheckoutPage() {
       return;
     }
 
+    // Generate a single unique order number to match the QR code and DB order
+    const orderNum = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
+    setCurrentOrderNumber(orderNum);
+
     try {
       setIsGeneratingQR(true);
       // Fetch dynamic QR string and md5Hash from official Bakong API mock
@@ -132,7 +140,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           amount: total,
           currency: 'USD',
-          orderId: `TEMP-${Date.now()}`,
+          orderId: orderNum,
           customerName: formData.fullName,
           customerPhone: formData.phone,
           customerCity: formData.city,
@@ -154,6 +162,36 @@ export default function CheckoutPage() {
       showError('Failed to generate payment QR code');
     } finally {
       setIsGeneratingQR(false);
+    }
+  };
+
+  const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formDataObj = new FormData();
+    formDataObj.append('file', file);
+    formDataObj.append('productId', 'receipts');
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formDataObj,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Upload failed');
+      }
+
+      const data = await res.json();
+      setReceiptUrl(data.url);
+    } catch (err: any) {
+      console.error('Receipt upload error:', err);
+      showError(err.message || 'Failed to upload receipt screenshot');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -445,21 +483,74 @@ export default function CheckoutPage() {
                 </div>
               )}
             </div>
-            
-            <div className="space-y-4">
+                         <div className="space-y-4">
               <div className="flex justify-between items-center py-3 border-y border-[#141414]/10">
                 <span className="text-sm font-medium text-[#141414]/70">Total Amount</span>
                 <span className="text-xl font-semibold text-[#141414]">{formatPrice(total)}</span>
               </div>
 
+              {/* Screenshot Upload Block */}
+              {paymentStatus === 'pending' && (
+                <div className="border border-dashed border-[#141414]/20 rounded-lg p-3 bg-[#F2EFE9]/30">
+                  <span className="block text-[11px] font-semibold text-[#141414]/70 mb-2 uppercase tracking-wider">
+                    Upload Payment Slip (Required)
+                  </span>
+                  
+                  {receiptUrl ? (
+                    <div className="relative rounded overflow-hidden border border-[#141414]/10 h-32 bg-white flex items-center justify-center">
+                      <img 
+                        src={receiptUrl} 
+                        alt="Payment Receipt Preview" 
+                        className="h-full w-auto object-contain"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setReceiptUrl('')}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors shadow-md"
+                        aria-label="Remove slip"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center py-4 px-2 border border-dashed border-[#141414]/15 rounded bg-white cursor-pointer hover:bg-gray-50 transition-colors">
+                      {isUploading ? (
+                        <div className="flex flex-col items-center gap-1.5 text-xs text-[#141414]/60">
+                          <Spinner size="sm" />
+                          <span>Uploading receipt...</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-1 text-center">
+                          <svg className="mx-auto h-8 w-8 text-[#141414]/30" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a2 2 0 00-2.828 0L20 40M36 40l-4-4m-12-8l-4-4a2 2 0 00-2.828 0L8 28" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <span className="text-xs font-medium text-[#141414]/70">Click to upload screenshot</span>
+                          <span className="text-[10px] text-[#141414]/40">PNG, JPG up to 5MB</span>
+                        </div>
+                      )}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleReceiptUpload} 
+                        disabled={isUploading}
+                        className="hidden" 
+                      />
+                    </label>
+                  )}
+                </div>
+              )}
+
               {/* Loader or Simulate test button */}
               {paymentStatus === 'pending' ? (
                 <div className="flex flex-col gap-3">
-                  <div className="text-xs text-center text-[#141414]/60">
-                    Once you have completed the transfer in your banking app, please click the button below to confirm.
+                  <div className="text-xs text-center text-[#141414]/60 font-medium">
+                    {!receiptUrl 
+                      ? "⚠️ Please upload your transfer screenshot above to activate confirmation." 
+                      : "✓ Receipt uploaded successfully! Click below to confirm."}
                   </div>
                   <button
                     type="button"
+                    disabled={isUploading || !receiptUrl}
                     onClick={async () => {
                       setPaymentStatus('success');
 
@@ -471,7 +562,9 @@ export default function CheckoutPage() {
                             items,
                             customerInfo: formData,
                             total,
-                            paymentStatus: 'paid'
+                            paymentStatus: 'paid',
+                            receiptUrl,
+                            orderNumber: currentOrderNumber
                           })
                         });
                       } catch (err) {
@@ -480,7 +573,7 @@ export default function CheckoutPage() {
 
                       setTimeout(() => window.location.href = '/order-success', 1500);
                     }}
-                    className="w-full bg-[#E3000F] text-white py-3 text-sm font-semibold tracking-widest uppercase hover:bg-[#E3000F]/90 transition-all duration-300 rounded-sm shadow-md flex items-center justify-center gap-2"
+                    className="w-full bg-[#E3000F] text-white py-3 text-sm font-semibold tracking-widest uppercase hover:bg-[#E3000F]/90 transition-all duration-300 rounded-sm shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:bg-[#141414]/30 disabled:cursor-not-allowed"
                   >
                     <span>I Already Paid</span>
                   </button>

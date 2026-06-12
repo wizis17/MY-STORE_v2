@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+
 const BUCKET_NAME = 'product-images';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+const supabaseAdmin = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,6 +42,9 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
     
+    // Choose client based on whether it is a payment receipt (guests bypass storage RLS)
+    const uploadClient = productId === 'receipts' ? supabaseAdmin : supabase;
+    
     // Generate unique filename
     const fileExtension = file.name.split('.').pop();
     const fileName = `products/${productId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
@@ -43,7 +53,7 @@ export async function POST(request: NextRequest) {
     const buffer = await file.arrayBuffer();
     
     // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
+    const { data, error } = await uploadClient.storage
       .from(BUCKET_NAME)
       .upload(fileName, buffer, {
         contentType: file.type,
@@ -57,7 +67,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get public URL
-    const { data: publicUrlData } = supabase.storage
+    const { data: publicUrlData } = uploadClient.storage
       .from(BUCKET_NAME)
       .getPublicUrl(fileName);
 
