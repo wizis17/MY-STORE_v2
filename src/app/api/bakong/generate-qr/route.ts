@@ -1,8 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { sendTelegramMessage } from '@/lib/telegram';
 
 export async function POST(req: NextRequest) {
   try {
-    const { amount, currency, orderId } = await req.json();
+    const { amount, currency, orderId, customerName, customerPhone, customerCity } = await req.json();
+    const bakongMode = process.env.BAKONG_MODE || 'mock';
+
+    const displayCurrency = currency || 'USD';
+    const displayOrderId = orderId || `TEMP-${Date.now()}`;
+
+    await sendTelegramMessage(
+      [
+        'New KHQR Payment Started',
+        `Order Ref: ${displayOrderId}`,
+        `Amount: ${amount} ${displayCurrency}`,
+        `Customer: ${customerName || 'N/A'}`,
+        `Phone: ${customerPhone || 'N/A'}`,
+        `City: ${customerCity || 'N/A'}`,
+      ].join('\n')
+    );
 
     // In a real application, you would integrate with the Bakong KHQR SDK
     // or call the Bakong OpenAPI endpoint to generate a KHQR string.
@@ -25,10 +41,20 @@ export async function POST(req: NextRequest) {
       const qrString = signResponse.data.qrString;
     */
 
-    // Simulated Response for development
+    // Mock mode: use static merchant KHQR image on frontend to avoid invalid payload scans.
+    if (bakongMode !== 'real') {
+      return NextResponse.json({
+        qrString: null,
+        md5Hash: `mock_md5_hash_${displayOrderId}`,
+        useStaticKhqrImage: true,
+      });
+    }
+
+    // Placeholder for real integration. Replace this with Bakong signed request when your account is active.
     return NextResponse.json({
-      qrString: `khqr://mock_string_for_order_${orderId}_amount_${amount}`,
-      md5Hash: `mock_md5_hash_${orderId}`, 
+      qrString: null,
+      md5Hash: `pending_real_md5_${displayOrderId}`,
+      useStaticKhqrImage: true,
     });
   } catch (error) {
     console.error('Failed to generate Bakong KHQR:', error);

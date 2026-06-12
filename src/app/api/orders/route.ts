@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/supabase';
+import { sendTelegramMessage } from '@/lib/telegram';
 
 // Use the Service Role Key to bypass RLS so guests can create orders
 const supabaseAdmin = createClient<Database>(
@@ -62,6 +63,21 @@ export async function POST(req: NextRequest) {
     if (itemsError) {
       console.error('Failed to insert order items:', itemsError);
       return NextResponse.json({ error: 'Failed to create order items', details: itemsError }, { status: 500 });
+    }
+
+    if ((paymentStatus || 'paid') === 'paid') {
+      await sendTelegramMessage(
+        [
+          '🔔 PAYMENT CONFIRMED (Verify ABA/Bakong)',
+          `Order: ${order.order_number}`,
+          `Amount: ${total} USD`,
+          `Customer: ${customerInfo.fullName}`,
+          `Phone: ${customerInfo.phone}`,
+          `Address: ${customerInfo.address}, ${customerInfo.city}`,
+          `Items: ${items.length}`,
+          'ℹ️ Customer clicked "I Already Paid". Please check your ABA/Bakong app notification to verify.',
+        ].join('\n')
+      );
     }
 
     return NextResponse.json({ success: true, orderId: order.id, orderNumber });

@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   title: 'STORE - Modern E-commerce for Quality Clothing',
   description: 'Discover our collection of premium T-shirts and pants. Shop the latest trends in men\'s and women\'s fashion.',
   keywords: ['e-commerce', 't-shirts', 'pants', 'fashion', 'clothing', 'online shopping'],
+  icons: {
+    icon: '/images/circle-logo.png',
+    shortcut: '/images/circle-logo.png',
+    apple: '/images/circle-logo.png',
+  },
 };
 
 export default function RootLayout({

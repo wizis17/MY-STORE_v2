@@ -34,6 +34,7 @@ const formatPrice = (price: number) =>
 export default function CheckoutPage() {
   const { items } = useCartStore();
   const { toasts, remove, error: showError } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -41,11 +42,16 @@ export default function CheckoutPage() {
     address: '',
     city: 'Phnom Penh',
   });
+
+  useEffect(() => {
+    setIsLoading(false);
+  }, []);
   const [isProvinceOpen, setIsProvinceOpen] = useState(false);
   const [provinceSearch, setProvinceSearch] = useState('');
   const [showQR, setShowQR] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success'>('pending');
   const [qrString, setQrString] = useState<string>('');
+  const [useStaticKhqrImage, setUseStaticKhqrImage] = useState(false);
   const [md5Hash, setMd5Hash] = useState<string>('');
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
 
@@ -123,13 +129,21 @@ export default function CheckoutPage() {
       const res = await fetch('/api/bakong/generate-qr', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: total }),
+        body: JSON.stringify({
+          amount: total,
+          currency: 'USD',
+          orderId: `TEMP-${Date.now()}`,
+          customerName: formData.fullName,
+          customerPhone: formData.phone,
+          customerCity: formData.city,
+        }),
       });
       
       if (!res.ok) throw new Error('Failed to generate Bakong QR');
       
-      const { qrString, md5Hash } = await res.json();
-      setQrString(qrString);
+      const { qrString, md5Hash, useStaticKhqrImage } = await res.json();
+      setQrString(qrString || '');
+      setUseStaticKhqrImage(Boolean(useStaticKhqrImage));
       setMd5Hash(md5Hash);
 
       // Show Bakong QR Popup
@@ -142,6 +156,14 @@ export default function CheckoutPage() {
       setIsGeneratingQR(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F2EFE9]">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -386,7 +408,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
               <h3 className="text-2xl font-light italic tracking-widest text-[#141414] mb-2">
-                {paymentStatus === 'success' ? 'Payment Verified!' : 'Pay with Bakong'}
+                {paymentStatus === 'success' ? 'Payment Verified!' : 'Pay with ABA / Bakong'}
               </h3>
               <p className="text-sm font-light text-[#141414]/70">
                 {paymentStatus === 'success' 
@@ -396,9 +418,15 @@ export default function CheckoutPage() {
             </div>
             
             <div className="aspect-square bg-white rounded-xl mb-6 flex items-center justify-center shadow-inner relative overflow-hidden p-4">
-              {qrString ? (
+              {useStaticKhqrImage ? (
+                <img
+                  src="/images/KHQR.JPG"
+                  alt="Bakong KHQR"
+                  className="w-full h-full object-cover object-center scale-[1.35] translate-y-[-5%] sm:translate-y-0"
+                />
+              ) : qrString ? (
                 <QRCodeSVG 
-                  value={qrString} 
+                  value={qrString}
                   size={256}
                   level="M"
                   includeMargin={false}
@@ -427,24 +455,39 @@ export default function CheckoutPage() {
               {/* Loader or Simulate test button */}
               {paymentStatus === 'pending' ? (
                 <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-center gap-2 text-sm text-[#141414]/60">
-                    <Spinner size="sm" />
-                    <span>Listening for payment...</span>
+                  <div className="text-xs text-center text-[#141414]/60">
+                    Once you have completed the transfer in your banking app, please click the button below to confirm.
                   </div>
-                  {/* Remove this button in production! It's just to let you test the completion flow. */}
                   <button
-                    onClick={() => {
+                    type="button"
+                    onClick={async () => {
                       setPaymentStatus('success');
+
+                      try {
+                        await fetch('/api/orders', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            items,
+                            customerInfo: formData,
+                            total,
+                            paymentStatus: 'paid'
+                          })
+                        });
+                      } catch (err) {
+                        console.error('Failed to save paid order:', err);
+                      }
+
                       setTimeout(() => window.location.href = '/order-success', 1500);
                     }}
-                    className="w-full bg-[#141414]/5 text-[#141414] py-2 text-xs font-medium uppercase hover:bg-[#141414]/10 transition-colors rounded-sm"
+                    className="w-full bg-[#E3000F] text-white py-3 text-sm font-semibold tracking-widest uppercase hover:bg-[#E3000F]/90 transition-all duration-300 rounded-sm shadow-md flex items-center justify-center gap-2"
                   >
-                    (Dev) Simulate Success
+                    <span>I Already Paid</span>
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2 text-sm text-green-600 font-medium">
-                  Payment Successful!
+                  Payment Confirmed!
                 </div>
               )}
             </div>
